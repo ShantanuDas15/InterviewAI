@@ -23,36 +23,45 @@
 
 ### Step 3: Deploy Backend to Render (10 minutes)
 
-1. Go to https://render.com and sign up with GitHub
-2. Click **New +** → **Web Service**
-3. **Connect Repository**:
-   - Authorize GitHub
-   - Select `ShantanuDas15/InterviewAI`
-4. **Configure Service**:
-   ```
-   Name: interviewai-backend
-   Region: Oregon (US West) or closest to you
-   Branch: main
-   Root Directory: interviewai_backend
-   Runtime: Java
-   Build Command: ./mvnw clean package -DskipTests
-   Start Command: java -Dserver.port=$PORT -jar target/interviewai_backend-0.0.1-SNAPSHOT.jar
-   Instance Type: Free
-   ```
+**IMPORTANT**: Render will auto-detect the Java project from `render.yaml` file.
 
-5. **Add Environment Variables** (click "Advanced" → "Add Environment Variable"):
-   ```bash
-   DB_URL = jdbc:postgresql://db.xxxxxxxxxxxxx.supabase.co:5432/postgres?sslmode=require
+1. Go to **https://render.com** and sign in with GitHub
+2. Click **"New +" → "Blueprint"** (NOT Web Service)
+3. Connect repository: `ShantanuDas15/InterviewAI`
+4. Render will automatically detect `render.yaml`
+5. Click **"Apply"**
+
+**Alternative Method (Manual Setup):**
+
+If Blueprint doesn't work, use this method:
+
+1. Click **"New +" → "Web Service"**
+2. Connect repository: `ShantanuDas15/InterviewAI`
+3. Configure:
+   - **Name**: `interviewai-backend`
+   - **Environment**: Select **"Docker"** (not Java - we'll configure it)
+   - **Root Directory**: `interviewai_backend`
+   - **Branch**: `main`
+   - **Build Command**: `./mvnw clean package -DskipTests`
+   - **Start Command**: `java -Dserver.port=$PORT -jar target/interviewai_backend-0.0.1-SNAPSHOT.jar`
+   - **Instance Type**: Free
+
+4. **Add Environment Variables** (click "Advanced" → "Add Environment Variable"):
+   ```
+   JAVA_VERSION = 21
+   DB_URL = jdbc:postgresql://[YOUR-SUPABASE-HOST]:5432/postgres?sslmode=require
    DB_USERNAME = postgres
-   DB_PASSWORD = [your-supabase-db-password]
-   SUPABASE_URL = https://xxxxxxxxxxxxx.supabase.co
-   SUPABASE_JWT_SECRET = [from-supabase-api-settings]
-   SUPABASE_SERVICE_ROLE_KEY = [service_role-key-from-supabase]
-   GEMINI_API_KEY = [your-gemini-api-key]
+   DB_PASSWORD = [YOUR-SUPABASE-PASSWORD]
+   SUPABASE_URL = [YOUR-SUPABASE-PROJECT-URL]
+   SUPABASE_JWT_SECRET = [FROM-SUPABASE]
+   SUPABASE_SERVICE_ROLE_KEY = [FROM-SUPABASE]
+   GEMINI_API_KEY = [YOUR-GEMINI-KEY]
    GEMINI_API_URL = https://generativelanguage.googleapis.com/v1beta/models
    ```
 
-6. Click **Create Web Service** and wait 5-10 minutes for first deploy
+5. Click **"Create Web Service"**
+
+**Note**: First build may take 5-10 minutes. Render will automatically install Java 21.
 7. Copy your backend URL: `https://interviewai-backend.onrender.com`
 
 ### Step 4: Update Frontend Configuration (2 minutes)
@@ -74,6 +83,7 @@
 ### Step 5: Deploy Frontend to Render (8 minutes)
 
 **Option A: Render (Recommended)**
+
 1. Click **New +** → **Static Site**
 2. Connect same repository
 3. Configure:
@@ -86,11 +96,13 @@
 4. Click **Create Static Site**
 
 **Option B: Netlify (Alternative - Better for Flutter)**
+
 1. Go to https://app.netlify.com
 2. Drag and drop `interviewai_frontend/build/web` folder
 3. Or connect GitHub and auto-deploy
 
 **Option C: Vercel (Alternative)**
+
 1. Go to https://vercel.com
 2. Import repository
 3. Set:
@@ -113,6 +125,7 @@
 ## 🎉 You're Live!
 
 **Your URLs:**
+
 - Frontend: `https://interviewai-frontend.onrender.com` (or Netlify/Vercel URL)
 - Backend: `https://interviewai-backend.onrender.com`
 
@@ -121,6 +134,7 @@
 ## ⚠️ Important Notes
 
 ### Free Tier Limitations
+
 - **Render Free**: Services sleep after 15 min inactivity
   - First request after sleep takes 30-60 seconds
   - Upgrade to Starter ($7/mo) for always-on
@@ -128,6 +142,7 @@
 - **Gemini Free**: 60 requests/minute
 
 ### Performance Tips
+
 1. **Backend Cold Starts**: Consider pinging your backend every 10 minutes to keep it awake
 2. **Database Pooling**: Already configured in your Spring Boot app
 3. **Frontend CDN**: Netlify/Vercel have better CDN than Render for static sites
@@ -137,6 +152,7 @@
 ## 🔧 Troubleshooting
 
 ### Backend Not Starting
+
 ```bash
 # Check logs in Render dashboard
 # Common issues:
@@ -146,11 +162,13 @@
 ```
 
 ### Frontend Can't Connect
+
 1. Verify `api_constants.dart` has correct backend URL
 2. Check CORS settings (already configured in backend)
 3. Rebuild: `flutter build web --release`
 
 ### Database Errors
+
 ```bash
 # Test connection from local:
 psql "postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres"
@@ -163,14 +181,17 @@ psql "postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres"
 ## 🚀 Next Steps (Optional)
 
 1. **Custom Domain**:
+
    - Add your domain in Render/Netlify settings
    - Update DNS records
 
 2. **Monitoring**:
+
    - Set up UptimeRobot (free monitoring)
    - Enable Render email alerts
 
 3. **CI/CD**:
+
    - Already enabled with GitHub integration
    - Every push to `main` auto-deploys
 
@@ -183,12 +204,14 @@ psql "postgresql://postgres:[PASSWORD]@db.[REF].supabase.co:5432/postgres"
 ## 💰 Cost Breakdown
 
 **Current Setup (Free)**: $0/month
+
 - Render Free: Web Service (sleeps)
 - Netlify/Vercel Free: Static hosting
 - Supabase Free: Database
 - Gemini Free: AI API
 
 **Recommended Production**: ~$50/month
+
 - Render Starter: $7/month (always-on backend)
 - Netlify Pro: $19/month (better CDN, analytics)
 - Supabase Pro: $25/month (better performance)

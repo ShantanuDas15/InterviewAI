@@ -3,16 +3,18 @@
 ## 🎯 Pre-Deployment Checklist
 
 ### ✅ Security Verification
+
 - [x] Sensitive files excluded via `.gitignore`
 - [x] No API keys or passwords in repository
 - [x] Environment variables configured for production
 - [x] All changes committed and pushed to GitHub
 
 ### 📋 Required Services
+
 1. **Backend (Spring Boot)**: PostgreSQL database + Java Runtime
 2. **Frontend (Flutter Web)**: Static hosting service
 3. **Database**: PostgreSQL (Supabase or self-hosted)
-4. **External APIs**: 
+4. **External APIs**:
    - Google Gemini AI (for resume generation)
    - Supabase (for authentication & storage)
 
@@ -25,10 +27,12 @@
 #### Backend Deployment on Render
 
 1. **Create Render Account**
+
    - Go to https://render.com
    - Sign up with GitHub
 
 2. **Deploy Backend Service**
+
    - Click "New +" → "Web Service"
    - Connect your GitHub repository: `ShantanuDas15/InterviewAI`
    - Configure:
@@ -44,6 +48,7 @@
      ```
 
 3. **Set Environment Variables** (in Render dashboard):
+
    ```bash
    DB_URL=jdbc:postgresql://your-supabase-host:5432/postgres
    DB_USERNAME=postgres
@@ -61,12 +66,14 @@
 #### Frontend Deployment on Render (or Netlify/Vercel)
 
 1. **Build Flutter Web**
+
    ```bash
    cd interviewai_frontend
    flutter build web --release
    ```
 
 2. **Deploy to Render**
+
    - Click "New +" → "Static Site"
    - Connect repository
    - Configure:
@@ -104,12 +111,14 @@
 ### Option 3: Self-Hosted (VPS/Cloud)
 
 #### Requirements
+
 - Ubuntu 20.04+ or similar
 - Java 21+
 - PostgreSQL 12+
 - Nginx (for frontend)
 
 #### Backend Setup
+
 ```bash
 # Install Java
 sudo apt update
@@ -131,6 +140,7 @@ java -jar target/interviewai_backend-0.0.1-SNAPSHOT.jar
 ```
 
 #### Frontend Setup
+
 ```bash
 cd ../interviewai_frontend
 
@@ -146,15 +156,18 @@ sudo cp -r build/web/* /var/www/html/
 ## 🔧 Database Setup (Supabase - Recommended)
 
 1. **Create Supabase Project**
+
    - Go to https://supabase.com
    - Create new project
 
 2. **Get Database Credentials**
+
    - Go to Settings → Database
    - Copy connection string
    - Format: `postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-REF].supabase.co:5432/postgres`
 
 3. **Get Authentication Keys**
+
    - Go to Settings → API
    - Copy:
      - `anon` key (for frontend)
@@ -169,6 +182,7 @@ sudo cp -r build/web/* /var/www/html/
 ## 🔑 Environment Variables Reference
 
 ### Backend Required Variables
+
 ```bash
 # Database (Supabase or PostgreSQL)
 DB_URL=jdbc:postgresql://db.project.supabase.co:5432/postgres
@@ -189,7 +203,9 @@ PORT=8080
 ```
 
 ### Frontend Configuration
+
 Update `interviewai_frontend/lib/constants/api_constants.dart`:
+
 ```dart
 class ApiConstants {
   static const String baseUrl = 'https://your-backend-url.onrender.com';
@@ -203,11 +219,13 @@ class ApiConstants {
 ## 🧪 Testing Deployment
 
 ### Backend Health Check
+
 ```bash
 curl https://your-backend-url.onrender.com/actuator/health
 ```
 
 ### Frontend Verification
+
 - Visit your frontend URL
 - Try to:
   1. Register/Login
@@ -220,14 +238,17 @@ curl https://your-backend-url.onrender.com/actuator/health
 ## 📊 Monitoring & Logs
 
 ### Render
+
 - View logs in Render dashboard
 - Set up alerts for downtime
 
 ### Railway
+
 - Built-in logging dashboard
 - Metrics included
 
 ### Self-Hosted
+
 ```bash
 # View backend logs
 tail -f /var/log/interviewai/backend.log
@@ -241,6 +262,7 @@ tail -f /var/log/nginx/access.log
 ## 🐛 Troubleshooting
 
 ### Backend Won't Start
+
 1. Check environment variables are set correctly
 2. Verify database connection:
    ```bash
@@ -249,11 +271,13 @@ tail -f /var/log/nginx/access.log
 3. Check Java version: `java --version` (must be 21+)
 
 ### Frontend Can't Connect to Backend
+
 1. Update `api_constants.dart` with correct backend URL
 2. Rebuild: `flutter build web --release`
 3. Check CORS settings in backend
 
 ### Database Connection Issues
+
 1. Verify Supabase project is active
 2. Check connection pooling mode (use Transaction mode)
 3. Ensure password is correct
@@ -263,7 +287,9 @@ tail -f /var/log/nginx/access.log
 ## 🔄 Continuous Deployment
 
 ### Setup Auto-Deploy on Push
+
 Both Render and Railway support automatic deployment:
+
 1. Connect GitHub repository
 2. Enable auto-deploy on main branch
 3. Every push to `main` triggers deployment
@@ -273,6 +299,7 @@ Both Render and Railway support automatic deployment:
 ## 💰 Cost Estimation
 
 ### Free Tier Setup
+
 - **Backend**: Render Free (sleeps after 15 min inactivity)
 - **Frontend**: Netlify/Vercel Free (unlimited bandwidth)
 - **Database**: Supabase Free (500MB storage, 2GB bandwidth)
@@ -281,6 +308,7 @@ Both Render and Railway support automatic deployment:
 **Total Monthly Cost**: $0
 
 ### Production Setup
+
 - **Backend**: Render Starter ($7/month)
 - **Frontend**: Netlify Pro ($19/month) or Vercel Pro ($20/month)
 - **Database**: Supabase Pro ($25/month)
@@ -293,6 +321,7 @@ Both Render and Railway support automatic deployment:
 ## 📞 Support
 
 For deployment issues:
+
 1. Check GitHub Issues
 2. Review Render/Railway documentation
 3. Contact: [your-email@example.com]
