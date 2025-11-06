@@ -3,22 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:interviewai_frontend/app_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:interviewai_frontend/constants/api_constants.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Get Supabase credentials from ApiConstants
+  final supabaseUrl = ApiConstants.supabaseUrl;
+  final supabaseAnonKey = ApiConstants.supabaseAnonKey;
 
-  // Get Supabase credentials from environment variables
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-
-  // Validate environment variables
+  // Validate credentials
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
     throw Exception(
-      'Missing Supabase credentials. Please check your .env file.',
+      'Missing Supabase credentials. Please check ApiConstants.',
     );
   }
 

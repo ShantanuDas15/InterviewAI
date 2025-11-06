@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vapi/vapi.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 part 'vapi_provider.g.dart'; // Run build_runner after
 
@@ -21,11 +20,17 @@ class VapiNotifier extends _$VapiNotifier {
 
   @override
   CallState build() {
-    // Get VAPI public key from environment variables
-    final vapiPublicKey = dotenv.env['VAPI_PUBLIC_KEY'] ?? '';
+    // TODO: Add VAPI_PUBLIC_KEY to ApiConstants when ready
+    // For now, use a placeholder or empty string
+    final vapiPublicKey = ''; // Will be configured later
 
     if (vapiPublicKey.isEmpty) {
-      throw Exception('VAPI_PUBLIC_KEY not found in .env file');
+      if (kDebugMode) {
+        print('Warning: VAPI_PUBLIC_KEY not configured. Voice calls will not work.');
+      }
+      // Initialize with empty key - voice features will be disabled
+      vapiClient = VapiClient('');
+      return CallState.idle;
     }
 
     vapiClient = VapiClient(vapiPublicKey);
