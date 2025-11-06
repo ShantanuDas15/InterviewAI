@@ -9,16 +9,23 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Get Supabase credentials from ApiConstants
-  final supabaseUrl = ApiConstants.supabaseUrl;
-  final supabaseAnonKey = ApiConstants.supabaseAnonKey;
+  const supabaseUrl = ApiConstants.supabaseUrl;
+  const supabaseAnonKey = ApiConstants.supabaseAnonKey;
 
   // Validate credentials
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
     throw Exception('Missing Supabase credentials. Please check ApiConstants.');
   }
 
-  // Initialize Supabase
-  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+  // Initialize Supabase with proper auth settings for web
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+      autoRefreshToken: true,
+    ),
+  );
 
   // Run the app inside a Riverpod scope
   runApp(const ProviderScope(child: MyApp()));
