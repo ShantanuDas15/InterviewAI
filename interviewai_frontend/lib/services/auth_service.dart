@@ -6,10 +6,14 @@ import 'package:interviewai_frontend/main.dart'; // To get 'supabase'
 class AuthService {
   Future<void> signInWithGoogle() async {
     try {
+      // For web, explicitly set the redirect URL to the deployed site
+      final redirectUrl = kIsWeb 
+          ? Uri.parse('https://celadon-capybara-8d9b86.netlify.app')
+          : Uri.parse('io.supabase.interviewai://login-callback/');
+      
       await supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        // This is the URL Supabase will redirect back to
-        redirectTo: kIsWeb ? null : 'io.supabase.interviewai://login-callback/',
+        redirectTo: redirectUrl.toString(),
       );
     } catch (e) {
       debugPrint('Error signing in with Google: $e');

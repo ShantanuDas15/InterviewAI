@@ -26,7 +26,9 @@ class VapiNotifier extends _$VapiNotifier {
 
     if (vapiPublicKey.isEmpty) {
       if (kDebugMode) {
-        print('Warning: VAPI_PUBLIC_KEY not configured. Voice calls will not work.');
+        print(
+          'Warning: VAPI_PUBLIC_KEY not configured. Voice calls will not work.',
+        );
       }
       // Initialize with empty key - voice features will be disabled
       vapiClient = VapiClient('');

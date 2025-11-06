@@ -14,9 +14,7 @@ Future<void> main() async {
 
   // Validate credentials
   if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
-    throw Exception(
-      'Missing Supabase credentials. Please check ApiConstants.',
-    );
+    throw Exception('Missing Supabase credentials. Please check ApiConstants.');
   }
 
   // Initialize Supabase
