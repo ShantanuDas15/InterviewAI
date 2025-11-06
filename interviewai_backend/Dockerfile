@@ -25,11 +25,11 @@ WORKDIR /app
 # Copy jar from build stage
 COPY --from=build /app/target/interviewai_backend-0.0.1-SNAPSHOT.jar app.jar
 
-# Expose port
+# Cloud Run expects port from $PORT environment variable
 EXPOSE 8080
 
 # Set environment variables
 ENV JAVA_OPTS="-Xms512m -Xmx1024m"
 
-# Run application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=$PORT -jar app.jar"]
+# Run application (Cloud Run sets $PORT automatically)
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar"]
