@@ -24,7 +24,7 @@ class InterviewScreen extends ConsumerStatefulWidget {
 
 class _InterviewScreenState extends ConsumerState<InterviewScreen>
     with TickerProviderStateMixin {
-  final String _vapiAssistantId = 'be35928f-8c93-41a2-8e70-45ca675a9c3a';
+  final String _vapiAssistantId = '31a850a5-ce4f-4f12-a0a6-d282be0a83f4';
   late final AnimationController _gradientController;
   StreamSubscription? _vapiMessageSubscription;
 
