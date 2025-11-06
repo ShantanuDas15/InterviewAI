@@ -38,6 +38,7 @@ If Blueprint doesn't work, use this method:
 1. Click **"New +" → "Web Service"**
 2. Connect repository: `ShantanuDas15/InterviewAI`
 3. Configure:
+
    - **Name**: `interviewai-backend`
    - **Environment**: Select **"Docker"** (not Java - we'll configure it)
    - **Root Directory**: `interviewai_backend`
@@ -47,6 +48,7 @@ If Blueprint doesn't work, use this method:
    - **Instance Type**: Free
 
 4. **Add Environment Variables** (click "Advanced" → "Add Environment Variable"):
+
    ```
    JAVA_VERSION = 21
    DB_URL = jdbc:postgresql://[YOUR-SUPABASE-HOST]:5432/postgres?sslmode=require
@@ -61,8 +63,7 @@ If Blueprint doesn't work, use this method:
 
 5. Click **"Create Web Service"**
 
-**Note**: First build may take 5-10 minutes. Render will automatically install Java 21.
-7. Copy your backend URL: `https://interviewai-backend.onrender.com`
+**Note**: First build may take 5-10 minutes. Render will automatically install Java 21. 7. Copy your backend URL: `https://interviewai-backend.onrender.com`
 
 ### Step 4: Update Frontend Configuration (2 minutes)
 
