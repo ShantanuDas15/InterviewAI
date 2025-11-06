@@ -63,17 +63,9 @@ class VapiNotifier extends _$VapiNotifier {
       debugPrint('Formatted questions for Vapi:\n$formattedQuestions');
 
       // Start the call and get a VapiCall instance
+      // Try minimal configuration first
       currentCall = await vapiClient.start(
         assistantId: assistantId,
-        assistantOverrides: {
-          'firstMessage':
-              'Welcome to your mock interview. Are you ready to begin?',
-          'variableValues': {'interview_questions': formattedQuestions},
-          'voice': {
-            'speed':
-                0.85, // Reduce speed to 85% (default is 1.0, range: 0.5-2.0)
-          },
-        },
       );
 
       // Listen to events from the call
