@@ -10,6 +10,7 @@
 ## ✅ Deployment Complete
 
 ### **Infrastructure:**
+
 - ✅ **Frontend**: Netlify (Static Hosting)
 - ✅ **Backend**: Google Cloud Run (Containerized Spring Boot)
 - ✅ **Database**: Supabase PostgreSQL
@@ -17,6 +18,7 @@
 - ✅ **AI Service**: Google Gemini API
 
 ### **Features Deployed:**
+
 - ✅ User Authentication (Google Sign-In)
 - ✅ Resume Builder with AI
 - ✅ Mock Interview Generator
@@ -27,33 +29,37 @@
 
 ## 💰 Cost Breakdown (FREE!)
 
-| Service | Plan | Monthly Cost |
-|---------|------|-------------|
-| Google Cloud Run | Free Tier (2M requests) | **$0** |
-| Netlify | Free Plan | **$0** |
-| Supabase | Free Tier (500MB) | **$0** |
-| Google Gemini | Free Tier (60 req/min) | **$0** |
-| **TOTAL** | | **$0/month** ✅ |
+| Service          | Plan                    | Monthly Cost    |
+| ---------------- | ----------------------- | --------------- |
+| Google Cloud Run | Free Tier (2M requests) | **$0**          |
+| Netlify          | Free Plan               | **$0**          |
+| Supabase         | Free Tier (500MB)       | **$0**          |
+| Google Gemini    | Free Tier (60 req/min)  | **$0**          |
+| **TOTAL**        |                         | **$0/month** ✅ |
 
 ---
 
 ## 🔐 Security Configuration
 
 ### **OAuth Setup:**
+
 - ✅ Google Cloud OAuth Client configured
-- ✅ Authorized JavaScript origins: 
+- ✅ Authorized JavaScript origins:
   - `http://localhost` (for local dev)
   - `https://bejewelled-sunshine-92d55f.netlify.app` (production)
 - ✅ Redirect URI: `https://ymnoeizgsmwgswswcpea.supabase.co/auth/v1/callback`
 
 ### **Supabase Configuration:**
+
 - ✅ Site URL: `https://bejewelled-sunshine-92d55f.netlify.app`
 - ✅ Redirect URLs: `https://bejewelled-sunshine-92d55f.netlify.app/**`
 - ✅ PKCE Flow: Enabled
 - ✅ Google Provider: Enabled
 
 ### **Environment Variables (Backend):**
+
 All sensitive keys are securely stored in Google Cloud Run:
+
 - ✅ DB_URL
 - ✅ DB_USERNAME
 - ✅ DB_PASSWORD
@@ -66,6 +72,7 @@ All sensitive keys are securely stored in Google Cloud Run:
 ## 🚀 Deployment Commands
 
 ### **Frontend Deployment:**
+
 ```bash
 cd interviewai_frontend
 flutter build web --release
@@ -73,6 +80,7 @@ netlify deploy --prod --dir=build/web --site=4b053171-3e6b-4b77-92ee-bc8a3a3f95f
 ```
 
 ### **Backend Deployment:**
+
 ```bash
 cd interviewai_backend
 gcloud run deploy interviewai-backend --source . --region us-central1
@@ -83,12 +91,14 @@ gcloud run deploy interviewai-backend --source . --region us-central1
 ## 🧪 Testing Checklist
 
 ### **Authentication:**
+
 - [ ] Visit https://bejewelled-sunshine-92d55f.netlify.app
 - [ ] Click "Sign in with Google"
 - [ ] Successfully log in with Google account
 - [ ] Redirected to dashboard/home page
 
 ### **Resume Builder:**
+
 - [ ] Navigate to Resume Builder
 - [ ] Fill in personal information
 - [ ] Add education, experience, skills
@@ -97,6 +107,7 @@ gcloud run deploy interviewai-backend --source . --region us-central1
 - [ ] Download resume as PDF
 
 ### **Mock Interview:**
+
 - [ ] Navigate to Mock Interview
 - [ ] Select job role and difficulty
 - [ ] Click "Start Interview"
@@ -105,6 +116,7 @@ gcloud run deploy interviewai-backend --source . --region us-central1
 - [ ] View feedback
 
 ### **Resume Analysis:**
+
 - [ ] Navigate to Resume Analysis
 - [ ] Upload a resume file
 - [ ] Click "Analyze Resume"
@@ -116,16 +128,19 @@ gcloud run deploy interviewai-backend --source . --region us-central1
 ## 📊 Monitoring & Logs
 
 ### **Frontend (Netlify):**
+
 - **Dashboard**: https://app.netlify.com/sites/bejewelled-sunshine-92d55f
 - **Deploys**: https://app.netlify.com/sites/bejewelled-sunshine-92d55f/deploys
 - **Analytics**: https://app.netlify.com/sites/bejewelled-sunshine-92d55f/analytics
 
 ### **Backend (Cloud Run):**
+
 - **Dashboard**: https://console.cloud.google.com/run/detail/us-central1/interviewai-backend
 - **Logs**: https://console.cloud.google.com/run/detail/us-central1/interviewai-backend/logs
 - **Metrics**: https://console.cloud.google.com/run/detail/us-central1/interviewai-backend/metrics
 
 ### **Database (Supabase):**
+
 - **Dashboard**: https://supabase.com/dashboard/project/ymnoeizgsmwgswswcpea
 - **Table Editor**: https://supabase.com/dashboard/project/ymnoeizgsmwgswswcpea/editor
 - **Auth Users**: https://supabase.com/dashboard/project/ymnoeizgsmwgswswcpea/auth/users
@@ -135,17 +150,22 @@ gcloud run deploy interviewai-backend --source . --region us-central1
 ## 🛠️ Troubleshooting
 
 ### **OAuth 401 Error:**
+
 **Solution**: Wait 5 minutes after updating Google OAuth settings for changes to propagate.
 
 ### **CORS Errors:**
+
 **Solution**: Backend already configured with proper CORS headers in `SecurityConfig.java`
 
 ### **Cold Start (30-60s delay on first request):**
+
 **Explanation**: Cloud Run free tier sleeps after 15 min inactivity  
 **Solution**: Upgrade to Cloud Run Starter ($7/mo) for always-on or accept the delay
 
 ### **Resume Generation Fails:**
+
 **Check**:
+
 1. Backend logs for Gemini API errors
 2. Verify GEMINI_API_KEY is set correctly
 3. Check Gemini API quota (60 requests/min limit)
@@ -157,6 +177,7 @@ gcloud run deploy interviewai-backend --source . --region us-central1
 **GitHub**: https://github.com/ShantanuDas15/InterviewAI
 
 ### **Project Structure:**
+
 ```
 InterviewAI/
 ├── interviewai_backend/          # Spring Boot REST API
@@ -192,21 +213,25 @@ You have successfully:
 ## 📈 Next Steps (Optional)
 
 ### **Custom Domain:**
+
 1. Buy a domain (e.g., interviewai.com)
 2. Configure in Netlify: Settings → Domain Management
 3. Update Supabase redirect URLs with new domain
 
 ### **CI/CD Automation:**
+
 1. Enable Netlify auto-deploy from GitHub
 2. Set up Cloud Build triggers for backend
 3. Automatic deployment on git push
 
 ### **Monitoring & Alerts:**
+
 1. Set up Google Cloud billing alerts
 2. Configure Netlify deploy notifications
 3. Enable Supabase email notifications
 
 ### **Performance Optimization:**
+
 1. Enable Netlify CDN caching
 2. Optimize Flutter build size
 3. Add Cloud Run minimum instances (if needed)
@@ -216,6 +241,7 @@ You have successfully:
 ## 📧 Support
 
 For issues or questions:
+
 - GitHub Issues: https://github.com/ShantanuDas15/InterviewAI/issues
 - Email: [Your Email]
 
@@ -232,6 +258,7 @@ For issues or questions:
 Your InterviewAI application is now live and ready to use!
 
 Share your achievement:
+
 - Add to your portfolio
 - Share on LinkedIn
 - Include in your resume
@@ -241,4 +268,4 @@ Share your achievement:
 
 ---
 
-*Built with ❤️ using Flutter, Spring Boot, Supabase, and Google Cloud*
+_Built with ❤️ using Flutter, Spring Boot, Supabase, and Google Cloud_

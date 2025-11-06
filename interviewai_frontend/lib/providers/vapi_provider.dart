@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:vapi/vapi.dart';
+import 'package:interviewai_frontend/constants/api_constants.dart';
 
 part 'vapi_provider.g.dart'; // Run build_runner after
 
@@ -20,9 +21,8 @@ class VapiNotifier extends _$VapiNotifier {
 
   @override
   CallState build() {
-    // TODO: Add VAPI_PUBLIC_KEY to ApiConstants when ready
-    // For now, use a placeholder or empty string
-    final vapiPublicKey = ''; // Will be configured later
+    // Get VAPI public key from ApiConstants
+    const vapiPublicKey = ApiConstants.vapiPublicKey;
 
     if (vapiPublicKey.isEmpty) {
       if (kDebugMode) {
