@@ -1,6 +1,7 @@
 # Deploy Spring Boot Backend to Google Cloud Run
 
 ## Prerequisites
+
 - Google Cloud account (Free tier: 2 million requests/month)
 - gcloud CLI installed
 
@@ -9,6 +10,7 @@
 ### Step 1: Install Google Cloud CLI (if not installed)
 
 **Windows:**
+
 ```powershell
 # Download and run the installer
 (New-Object Net.WebClient).DownloadFile("https://dl.google.com/dl/cloudsdk/channels/rapid/GoogleCloudSDKInstaller.exe", "$env:Temp\GoogleCloudSDKInstaller.exe")
@@ -73,6 +75,7 @@ gcloud run deploy interviewai-backend \
 ### Step 5: Get Your Service URL
 
 After deployment completes, you'll get a URL like:
+
 ```
 https://interviewai-backend-xxxxx-uc.a.run.app
 ```
@@ -99,11 +102,13 @@ Copy this URL to update your Flutter frontend!
 ## Cost Estimate
 
 **Free Tier (Monthly):**
+
 - 2 million requests
 - 360,000 GB-seconds of memory
 - 180,000 vCPU-seconds
 
 **After Free Tier:**
+
 - $0.00002400 per request
 - $0.00000250 per GB-second
 - $0.00001000 per vCPU-second
@@ -115,18 +120,21 @@ Copy this URL to update your Flutter frontend!
 ## Troubleshooting
 
 ### Build Fails
+
 ```bash
 # Check logs
 gcloud run services logs read interviewai-backend --limit 50
 ```
 
 ### Update Service
+
 ```bash
 # Redeploy after changes
 gcloud run deploy interviewai-backend --source .
 ```
 
 ### View Service Details
+
 ```bash
 gcloud run services describe interviewai-backend --region us-central1
 ```
@@ -147,6 +155,7 @@ gcloud run services describe interviewai-backend --region us-central1
 ## Next Steps
 
 After backend is deployed:
+
 1. Copy your Cloud Run URL
 2. Update `interviewai_frontend/lib/constants/api_constants.dart`
 3. Deploy frontend to Netlify/Vercel
