@@ -578,6 +578,10 @@ class _ResumeFormScreenState extends ConsumerState<ResumeFormScreen>
         ),
         backgroundColor: const Color(0xFF1D1E33),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         actions: [
           if (_hasUnsavedChanges)
             Padding(

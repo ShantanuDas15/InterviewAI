@@ -58,6 +58,10 @@ class _ResumeDisplayScreenEnhancedState
         ),
         backgroundColor: const Color(0xFF1D1E33),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/resume-builder'),
+        ),
         actions: [
           // ATS Score button
           IconButton(

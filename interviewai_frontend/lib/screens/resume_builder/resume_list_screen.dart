@@ -51,6 +51,10 @@ class _ResumeListScreenState extends ConsumerState<ResumeListScreen> {
         ),
         backgroundColor: const Color(0xFF1D1E33),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
