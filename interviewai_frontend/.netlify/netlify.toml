@@ -7,8 +7,9 @@ redirects = []
 [functions."*"]
 
 [build]
-publish = "C:\\Java Projects\\InterviewAI"
+publish = "C:\\Java Projects\\InterviewAI\\interviewai_frontend"
 publishOrigin = "default"
+base = "C:\\Java Projects\\InterviewAI\\interviewai_frontend"
 
 [build.environment]
 
