@@ -8,7 +8,7 @@ class AuthService {
     try {
       // For web, explicitly set the redirect URL to the deployed site
       final redirectUrl = kIsWeb 
-          ? Uri.parse('https://celadon-capybara-8d9b86.netlify.app')
+          ? Uri.parse('https://bejewelled-sunshine-92d55f.netlify.app')
           : Uri.parse('io.supabase.interviewai://login-callback/');
       
       await supabase.auth.signInWithOAuth(
@@ -18,9 +18,7 @@ class AuthService {
     } catch (e) {
       debugPrint('Error signing in with Google: $e');
     }
-  }
-
-  // --- ADD THIS METHOD ---
+  }  // --- ADD THIS METHOD ---
   // We don't use try/catch here; we'll let the UI catch AuthException
   Future<void> signInWithEmailPassword(String email, String password) async {
     await supabase.auth.signInWithPassword(email: email, password: password);
