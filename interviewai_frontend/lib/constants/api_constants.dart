@@ -7,7 +7,7 @@ class ApiConstants {
   // Supabase Configuration
   static const String supabaseUrl = 'https://ymnoeizgsmwgswswcpea.supabase.co';
   static const String supabaseAnonKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltbm9laXpnc213Z3N3c3djcGVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjk4OTksImV4cCI6MjA3NzY0NTg5OX0.P8vHXhYqZ5qM7xQBvDfK8gKjB_7nGnrJQvK7aWxJ7hE'; // Get this from Supabase Settings > API
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltbm9laXpnc213Z3N3c3djcGVhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNjk4OTksImV4cCI6MjA3NzY0NTg5OX0.4wYjZm9Zrld7trc3Fj2SQ1E3Tz1ntIPsfRqeWuPfd0c';
 
   static const String generateInterviewEndpoint = '/api/interviews/generate';
   static const String feedbackEndpoint = '/api/feedback';
