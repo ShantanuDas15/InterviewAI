@@ -29,20 +29,79 @@ public class GeminiService {
     private ObjectMapper objectMapper; // For parsing JSON
 
     /**
-     * Calls Gemini to get interview questions.
+     * Calls Gemini to generate a complete conversational interview script.
+     * Creates a natural, human-like interview experience with proper flow,
+     * empathy, and professional transitions.
      */
     public Mono<String> generateInterviewQuestions(String role, String experience) {
         String prompt = String.format(
-                "Generate 5 interview questions for a %s %s role. " +
-                        "Return ONLY the questions as a JSON string array. " +
-                        "Example: [\"Question 1?\", \"Question 2?\"]",
+                "You are a professional, friendly interviewer conducting a voice interview for a %s %s position. " +
+                        "Create a COMPLETE interview script that feels natural and human-like.\\n\\n" +
+
+                        "INTERVIEWER PERSONALITY:\\n" +
+                        "- Warm, professional, and encouraging\\n" +
+                        "- Makes candidates feel comfortable\\n" +
+                        "- Shows genuine interest in their responses\\n" +
+                        "- Uses natural transitions and conversational phrases\\n" +
+                        "- Speaks in a relaxed, friendly tone\\n\\n" +
+
+                        "INTERVIEW STRUCTURE:\\n" +
+                        "1. OPENING: Warm greeting and ice breaker\\n" +
+                        "2. MAIN QUESTIONS: 5 relevant technical/behavioral questions\\n" +
+                        "3. CLOSING: Sincere thank you and next steps\\n\\n" +
+
+                        "CONVERSATIONAL ELEMENTS TO INCLUDE:\\n" +
+                        "- Acknowledgments after answers: 'That's interesting', 'I see', 'Great point', 'Thanks for sharing that'\\n" +
+                        "- Smooth transitions: 'Moving on to...', 'Let me ask you about...', 'I'd like to hear about...', 'That leads me to...'\\n" +
+                        "- Empathy phrases: 'I understand', 'That makes sense', 'I appreciate your honesty', 'No worries'\\n" +
+                        "- Natural filler words: 'So', 'Well', 'Now', 'Alright'\\n" +
+                        "- Reassurance: 'Take your time', 'There's no wrong answer', 'Feel free to elaborate'\\n\\n" +
+
+                        "GUIDELINES:\\n" +
+                        "- Use conversational, natural language (not robotic)\\n" +
+                        "- Ask one clear question at a time\\n" +
+                        "- Make the candidate feel valued and heard\\n" +
+                        "- Keep a positive, encouraging tone throughout\\n" +
+                        "- End on a warm, professional note\\n\\n" +
+
+                        "Return ONLY a JSON object with this EXACT structure:\\n" +
+                        "{\\n" +
+                        "  \\\"opening\\\": \\\"Warm greeting and introduction (2-3 sentences)\\\",\\n" +
+                        "  \\\"questions\\\": [\\n" +
+                        "    {\\n" +
+                        "      \\\"transition\\\": \\\"Natural phrase to introduce this question (1 sentence)\\\",\\n" +
+                        "      \\\"question\\\": \\\"The actual interview question\\\",\\n" +
+                        "      \\\"acknowledgment\\\": \\\"What to say after hearing the answer (1 sentence)\\\"\\n" +
+                        "    }\\n" +
+                        "  ],\\n" +
+                        "  \\\"closing\\\": \\\"Sincere thank you and next steps (2-3 sentences)\\\"\\n" +
+                        "}\\n\\n" +
+
+                        "IMPORTANT: Return ONLY the raw JSON object. No markdown formatting, no code blocks, no additional text.",
                 experience, role);
 
         GeminiRequest request = buildGeminiRequest(prompt);
 
         return callGeminiApi(request)
                 .map(GeminiResponse::getFirstText)
-                .onErrorResume(e -> Mono.just("[\"Error generating questions: " + e.getMessage() + "\"]"));
+                .map(responseText -> {
+                    // Remove markdown backticks if present
+                    return responseText.replace("```json", "").replace("```", "").trim();
+                })
+                .onErrorResume(e -> {
+                    System.err.println("Error generating interview questions: " + e.getMessage());
+                    // Return a fallback conversational structure
+                    return Mono.just(
+                            "{\"opening\": \"Hello! Thanks for joining me today. I'm excited to learn more about your background and experience. Let's have a great conversation!\", " +
+                                    "\"questions\": [" +
+                                    "{\"transition\": \"Let's start with something about you.\", \"question\": \"Can you tell me about yourself and your background?\", \"acknowledgment\": \"That's great, thanks for sharing.\"}," +
+                                    "{\"transition\": \"Now, I'd like to hear about your experience.\", \"question\": \"What interests you about this role?\", \"acknowledgment\": \"I appreciate your perspective on that.\"}," +
+                                    "{\"transition\": \"Let me ask you about your skills.\", \"question\": \"What are your key strengths?\", \"acknowledgment\": \"Those sound like valuable skills.\"}," +
+                                    "{\"transition\": \"I'm curious about your approach.\", \"question\": \"How do you handle challenges?\", \"acknowledgment\": \"That's a thoughtful approach.\"}," +
+                                    "{\"transition\": \"One more question for you.\", \"question\": \"Where do you see yourself in the future?\", \"acknowledgment\": \"Thank you for sharing your goals.\"}" +
+                                    "], " +
+                                    "\"closing\": \"Thank you so much for your time today. You've shared some really interesting insights. We'll be in touch soon with next steps. Have a great day!\"}");
+                });
     }
 
     /**

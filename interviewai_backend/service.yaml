@@ -1,0 +1,43 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: interviewai-backend
+  labels:
+    cloud.googleapis.com/location: us-central1
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      containers:
+        - image: gcr.io/interviewai-backend-sd-123/interviewai-backend
+          ports:
+            - name: http1
+              containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres.ymnoeizgsmwgswswcpea
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: ShantanuDas#8013
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: org.postgresql.Driver
+            - name: SUPABASE_URL
+              value: https://ymnoeizgsmwgswswcpea.supabase.co
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inltbm9laXpnc213Z3N3c3djcGVhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjA2OTg5OSwiZXhwIjoyMDc3NjQ1ODk5fQ.f8wTWqHvwkdUVAMEhJd9GXNaH0lJTRZVD0yII-UC24g
+            - name: SUPABASE_JWT_SECRET
+              value: HgOSUF8geCoQEXljhTUHhQz3JDnKyHv0G2Z50NX4XfHcEO3Rd+Z9WzxYxSx0OkCIhkGZxTGLo3F+Tzf5Sxz1Rg==
+            - name: GEMINI_API_KEY
+              value: AIzaSyAP3mnXDQ-QsyI5HE8nzKfqYy9K4G-V_H8
+            - name: GEMINI_API_URL
+              value: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+          resources:
+            limits:
+              cpu: "1"
+              memory: 1Gi
