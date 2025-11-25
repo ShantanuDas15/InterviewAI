@@ -238,12 +238,12 @@ class _InterviewScreenState extends ConsumerState<InterviewScreen>
         maxWidth: isDesktop ? 500 : screenWidth * 0.9,
       ),
       child: Card(
-        elevation: 30,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        elevation: 40,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         color: Colors.transparent,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(32),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -254,20 +254,26 @@ class _InterviewScreenState extends ConsumerState<InterviewScreen>
               ],
             ),
             border: Border.all(
-              color: const Color(0xFF00D9FF).withValues(alpha: 0.3),
-              width: 2,
+              color: const Color(0xFF00D9FF).withValues(alpha: 0.4),
+              width: 2.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00D9FF).withValues(alpha: 0.2),
-                blurRadius: 40,
-                spreadRadius: 5,
-                offset: const Offset(0, 10),
+                color: const Color(0xFF00D9FF).withValues(alpha: 0.35),
+                blurRadius: 50,
+                spreadRadius: 8,
+                offset: const Offset(0, 15),
               ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 30,
-                spreadRadius: -5,
+                color: Colors.black.withValues(alpha: 0.6),
+                blurRadius: 40,
+                spreadRadius: -3,
+              ),
+              BoxShadow(
+                color: const Color(0xFF00FF87).withValues(alpha: 0.25),
+                blurRadius: 60,
+                spreadRadius: 10,
+                offset: const Offset(0, 20),
               ),
             ],
           ),
@@ -478,8 +484,8 @@ class _InterviewScreenState extends ConsumerState<InterviewScreen>
         subText = 'Saving your responses';
         break;
       case CallState.ended:
-        mainText = 'Session Complete';
-        subText = 'Generating your feedback report';
+        mainText = 'Analyzing Interview';
+        subText = 'Generating your personalized feedback...';
         break;
       case CallState.error:
         mainText = 'Connection Error';
@@ -890,24 +896,8 @@ class _InterviewScreenState extends ConsumerState<InterviewScreen>
     final transcript = vapiNotifier.fullTranscript;
 
     if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(
-              'Analyzing feedback...',
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
 
+    // No dialog - the existing UI shows the "Analyzing" state
     try {
       final api = ref.read(apiServiceProvider);
       final feedbackResponse = await api.submitFeedback(
@@ -916,16 +906,15 @@ class _InterviewScreenState extends ConsumerState<InterviewScreen>
       );
       final newFeedbackId = feedbackResponse['id'];
 
-      if (mounted) Navigator.of(context).pop();
       if (mounted) context.go('/feedback/$newFeedbackId');
     } catch (e) {
-      if (mounted) Navigator.of(context).pop();
       final friendlyMessage = e.toString().replaceFirst('Exception: ', '');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $friendlyMessage'),
             backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 5),
           ),
         );
       }

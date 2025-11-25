@@ -35,50 +35,49 @@ public class GeminiService {
      */
     public Mono<String> generateInterviewQuestions(String role, String experience) {
         String prompt = String.format(
-                "You are a professional, friendly interviewer conducting a voice interview for a %s %s position. " +
-                        "Create a COMPLETE interview script that feels natural and human-like.\\n\\n" +
+                "You are conducting a friendly voice interview for a %s %s position. " +
+                        "Create a natural, conversational interview flow.\\n\\n" +
 
-                        "INTERVIEWER PERSONALITY:\\n" +
-                        "- Warm, professional, and encouraging\\n" +
-                        "- Makes candidates feel comfortable\\n" +
-                        "- Shows genuine interest in their responses\\n" +
-                        "- Uses natural transitions and conversational phrases\\n" +
-                        "- Speaks in a relaxed, friendly tone\\n\\n" +
+                        "CRITICAL RULES:\\n" +
+                        "- DO NOT use placeholders like 'candidate name', 'company name', or 'job title'\\n" +
+                        "- DO NOT ask for personal information (name, company, etc.) - you already know it\\n" +
+                        "- Keep the opening brief (1 sentence max)\\n" +
+                        "- Focus questions on skills, experience, and problem-solving\\n" +
+                        "- Be warm but concise\\n\\n" +
 
                         "INTERVIEW STRUCTURE:\\n" +
-                        "1. OPENING: Warm greeting and ice breaker\\n" +
-                        "2. MAIN QUESTIONS: 5 relevant technical/behavioral questions\\n" +
-                        "3. CLOSING: Sincere thank you and next steps\\n\\n" +
+                        "1. Brief welcome (just say hello and let's begin)\\n" +
+                        "2. 5 focused questions about their %s experience\\n" +
+                        "3. Short thank you\\n\\n" +
 
-                        "CONVERSATIONAL ELEMENTS TO INCLUDE:\\n" +
-                        "- Acknowledgments after answers: 'That's interesting', 'I see', 'Great point', 'Thanks for sharing that'\\n" +
-                        "- Smooth transitions: 'Moving on to...', 'Let me ask you about...', 'I'd like to hear about...', 'That leads me to...'\\n" +
-                        "- Empathy phrases: 'I understand', 'That makes sense', 'I appreciate your honesty', 'No worries'\\n" +
-                        "- Natural filler words: 'So', 'Well', 'Now', 'Alright'\\n" +
-                        "- Reassurance: 'Take your time', 'There's no wrong answer', 'Feel free to elaborate'\\n\\n" +
+                        "QUESTION TOPICS (choose 5):\\n" +
+                        "- Previous relevant experience or projects\\n" +
+                        "- Technical skills and problem-solving approach\\n" +
+                        "- Challenges they've overcome\\n" +
+                        "- Teamwork and collaboration\\n" +
+                        "- Learning and growth mindset\\n" +
+                        "- Future goals and motivations\\n\\n" +
 
-                        "GUIDELINES:\\n" +
-                        "- Use conversational, natural language (not robotic)\\n" +
-                        "- Ask one clear question at a time\\n" +
-                        "- Make the candidate feel valued and heard\\n" +
-                        "- Keep a positive, encouraging tone throughout\\n" +
-                        "- End on a warm, professional note\\n\\n" +
+                        "CONVERSATIONAL STYLE:\\n" +
+                        "- Keep acknowledgments short: 'Great', 'I see', 'Interesting', 'Thanks'\\n" +
+                        "- Simple transitions: 'Next question', 'Moving on', 'Let me ask about', 'Tell me about'\\n" +
+                        "- Natural and friendly tone\\n\\n" +
 
-                        "Return ONLY a JSON object with this EXACT structure:\\n" +
+                        "Return ONLY a JSON object with this structure:\\n" +
                         "{\\n" +
-                        "  \\\"opening\\\": \\\"Warm greeting and introduction (2-3 sentences)\\\",\\n" +
+                        "  \\\"opening\\\": \\\"Brief welcome (1 sentence)\\\",\\n" +
                         "  \\\"questions\\\": [\\n" +
                         "    {\\n" +
-                        "      \\\"transition\\\": \\\"Natural phrase to introduce this question (1 sentence)\\\",\\n" +
-                        "      \\\"question\\\": \\\"The actual interview question\\\",\\n" +
-                        "      \\\"acknowledgment\\\": \\\"What to say after hearing the answer (1 sentence)\\\"\\n" +
+                        "      \\\"transition\\\": \\\"Short intro phrase\\\",\\n" +
+                        "      \\\"question\\\": \\\"Direct question about skills/experience\\\",\\n" +
+                        "      \\\"acknowledgment\\\": \\\"Brief response\\\"\\n" +
                         "    }\\n" +
                         "  ],\\n" +
-                        "  \\\"closing\\\": \\\"Sincere thank you and next steps (2-3 sentences)\\\"\\n" +
+                        "  \\\"closing\\\": \\\"Brief thank you (1 sentence)\\\"\\n" +
                         "}\\n\\n" +
 
-                        "IMPORTANT: Return ONLY the raw JSON object. No markdown formatting, no code blocks, no additional text.",
-                experience, role);
+                        "IMPORTANT: Use ONLY the actual role (%s) in questions. No placeholders. No asking for names or companies. Return raw JSON only.",
+                experience, role, role, role);
 
         GeminiRequest request = buildGeminiRequest(prompt);
 
