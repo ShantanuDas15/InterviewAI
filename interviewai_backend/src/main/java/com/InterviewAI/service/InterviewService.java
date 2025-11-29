@@ -1,21 +1,24 @@
-package com.InterviewAI.service;
+package com.interviewai.service;
 
-import com.InterviewAI.dto.InterviewRequest;
-import com.InterviewAI.model.Interview;
-import com.InterviewAI.repository.InterviewRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.interviewai.dto.InterviewRequest;
+import com.interviewai.model.Interview;
+import com.interviewai.repository.InterviewRepository;
 
 import java.util.UUID;
 
 @Service
 public class InterviewService {
 
-    @Autowired
-    private InterviewRepository interviewRepository;
+    private final InterviewRepository interviewRepository;
+    private final GeminiService geminiService;
 
-    @Autowired
-    private GeminiService geminiService;
+    public InterviewService(InterviewRepository interviewRepository, GeminiService geminiService) {
+        this.interviewRepository = java.util.Objects.requireNonNull(interviewRepository,
+                "interviewRepository must not be null");
+        this.geminiService = java.util.Objects.requireNonNull(geminiService, "geminiService must not be null");
+    }
 
     /**
      * Creates a new interview entry in the database.

@@ -1,18 +1,22 @@
-package com.InterviewAI.controller;
+package com.interviewai.controller;
 
-import com.InterviewAI.dto.ResumeBuildRequest;
-import com.InterviewAI.model.BuiltResume;
-import com.InterviewAI.repository.BuiltResumeRepository;
-import com.InterviewAI.service.GeminiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.interviewai.dto.ResumeBuildRequest;
+import com.interviewai.model.BuiltResume;
+import com.interviewai.repository.BuiltResumeRepository;
+import com.interviewai.service.GeminiService;
+
+// Using constructor injection instead of field injection for better testability and immutability
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -23,14 +27,19 @@ import java.util.UUID;
 @RequestMapping("/api/resume-builder")
 public class ResumeBuilderController {
 
-    @Autowired
-    private GeminiService geminiService;
+    private static final Logger logger = LoggerFactory.getLogger(ResumeBuilderController.class);
 
-    @Autowired
-    private BuiltResumeRepository resumeRepository;
+    private final GeminiService geminiService;
+    private final BuiltResumeRepository resumeRepository;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    public ResumeBuilderController(GeminiService geminiService,
+            BuiltResumeRepository resumeRepository,
+            ObjectMapper objectMapper) {
+        this.geminiService = geminiService;
+        this.resumeRepository = resumeRepository;
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * Build a new resume using AI enhancement.
@@ -65,16 +74,17 @@ public class ResumeBuilderController {
 
                         // 3. Save to database
                         BuiltResume savedResume = resumeRepository.save(newResume);
+                        Objects.requireNonNull(savedResume, "Saved resume must not be null");
 
                         return Mono.just(ResponseEntity.ok(savedResume));
 
                     } catch (Exception e) {
-                        System.err.println("Error saving built resume: " + e.getMessage());
+                        logger.error("Error saving built resume: {}", e.getMessage(), e);
                         return Mono.error(e);
                     }
                 })
                 .onErrorResume(e -> {
-                    System.err.println("Error building resume: " + e.getMessage());
+                    logger.error("Error building resume: {}", e.getMessage(), e);
                     return Mono.just(ResponseEntity.internalServerError().build());
                 });
     }
@@ -99,15 +109,16 @@ public class ResumeBuilderController {
      * @param authentication The authenticated user's details
      * @return The built resume if found and owned by the user
      */
-    @SuppressWarnings("null")
     @GetMapping("/{id}")
     public ResponseEntity<BuiltResume> getResumeById(
             @PathVariable UUID id,
             Authentication authentication) {
 
+        UUID safeId = Objects.requireNonNull(id, "resume id must not be null");
+
         UUID userId = UUID.fromString(authentication.getName());
 
-        return resumeRepository.findById(id)
+        return resumeRepository.findById(safeId)
                 .filter(resume -> resume.getUserId().equals(userId)) // Ensure user owns this resume
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -120,18 +131,20 @@ public class ResumeBuilderController {
      * @param authentication The authenticated user's details
      * @return 204 No Content if successful, 404 if not found
      */
-    @SuppressWarnings("null")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteResume(
             @PathVariable UUID id,
             Authentication authentication) {
 
+        UUID safeId = Objects.requireNonNull(id, "resume id must not be null");
+
         UUID userId = UUID.fromString(authentication.getName());
 
-        return resumeRepository.findById(id)
+        return resumeRepository.findById(safeId)
                 .filter(resume -> resume.getUserId().equals(userId)) // Ensure user owns this resume
                 .map(resume -> {
-                    resumeRepository.delete(resume);
+                    BuiltResume safeResume = Objects.requireNonNull(resume, "resume must not be null");
+                    resumeRepository.delete(safeResume);
                     return ResponseEntity.noContent().<Void>build();
                 })
                 .orElse(ResponseEntity.notFound().build());

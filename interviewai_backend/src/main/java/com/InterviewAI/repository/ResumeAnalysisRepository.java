@@ -1,8 +1,9 @@
-package com.InterviewAI.repository;
+package com.interviewai.repository;
 
-import com.InterviewAI.model.ResumeAnalysis;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.interviewai.model.ResumeAnalysis;
 
 import java.util.Optional;
 import java.util.UUID;

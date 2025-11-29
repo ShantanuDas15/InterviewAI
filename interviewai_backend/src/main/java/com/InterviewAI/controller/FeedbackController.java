@@ -1,9 +1,5 @@
-package com.InterviewAI.controller;
+package com.interviewai.controller;
 
-import com.InterviewAI.dto.FeedbackRequest;
-import com.InterviewAI.model.Feedback;
-import com.InterviewAI.service.FeedbackService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,14 +10,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.interviewai.dto.FeedbackRequest;
+import com.interviewai.model.Feedback;
+import com.interviewai.service.FeedbackService;
+
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/feedback")
 public class FeedbackController {
+    private final FeedbackService feedbackService;
 
-    @Autowired
-    private FeedbackService feedbackService;
+    public FeedbackController(FeedbackService feedbackService) {
+        this.feedbackService = feedbackService;
+    }
 
     @PostMapping
     public ResponseEntity<Feedback> generateFeedback(
@@ -51,7 +53,7 @@ public class FeedbackController {
     }
 
     @GetMapping("/for-interview/{interviewId}")
-    public ResponseEntity<?> getFeedbackForInterview(
+    public ResponseEntity<Object> getFeedbackForInterview(
             @PathVariable UUID interviewId,
             Authentication authentication) {
 

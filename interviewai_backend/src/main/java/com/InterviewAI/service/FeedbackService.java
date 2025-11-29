@@ -1,28 +1,33 @@
-package com.InterviewAI.service;
+package com.interviewai.service;
 
-import com.InterviewAI.dto.FeedbackRequest;
-import com.InterviewAI.model.Feedback;
-import com.InterviewAI.model.Interview;
-import com.InterviewAI.repository.FeedbackRepository;
-import com.InterviewAI.repository.InterviewRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+// using constructor injection for better testability
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import com.interviewai.dto.FeedbackRequest;
+import com.interviewai.model.Feedback;
+import com.interviewai.model.Interview;
+import com.interviewai.repository.FeedbackRepository;
+import com.interviewai.repository.InterviewRepository;
+
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
 public class FeedbackService {
 
-    @Autowired
-    private FeedbackRepository feedbackRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final InterviewRepository interviewRepository;
+    private final GeminiService geminiService;
 
-    @Autowired
-    private InterviewRepository interviewRepository;
-
-    @Autowired
-    private GeminiService geminiService;
+    public FeedbackService(FeedbackRepository feedbackRepository,
+            InterviewRepository interviewRepository,
+            GeminiService geminiService) {
+        this.feedbackRepository = feedbackRepository;
+        this.interviewRepository = interviewRepository;
+        this.geminiService = geminiService;
+    }
 
     /**
      * Creates feedback for an interview by analyzing the transcript.
@@ -30,8 +35,9 @@ public class FeedbackService {
      */
     public Feedback generateAndSaveFeedback(FeedbackRequest request, UUID userId) {
         // Verify the interview exists and belongs to the user
-        @SuppressWarnings("null")
-        Interview interview = interviewRepository.findById(request.getInterviewId())
+        UUID interviewId = Objects.requireNonNull(request.getInterviewId(), "Interview ID must not be null");
+
+        Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
 
         if (!interview.getUserId().equals(userId)) {
@@ -44,7 +50,7 @@ public class FeedbackService {
 
         // 2. Create and populate the Feedback entity
         Feedback feedback = new Feedback();
-        feedback.setInterviewId(request.getInterviewId());
+        feedback.setInterviewId(interviewId);
         feedback.setUserId(userId); // Set user_id for direct user-feedback relationship
         feedback.setTranscript(request.getTranscript());
 
@@ -61,14 +67,16 @@ public class FeedbackService {
     /**
      * Get feedback by ID with user authorization check
      */
-    @SuppressWarnings("null")
     public Feedback getFeedbackById(UUID feedbackId, UUID userId) {
+        UUID safeFeedbackId = Objects.requireNonNull(feedbackId, "feedbackId must not be null");
         // Get the feedback
-        Feedback feedback = feedbackRepository.findById(feedbackId)
+        Feedback feedback = feedbackRepository.findById(safeFeedbackId)
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
 
         // Get the associated interview to verify ownership
-        Interview interview = interviewRepository.findById(feedback.getInterviewId())
+        UUID feedbackInterviewId = Objects.requireNonNull(feedback.getInterviewId(),
+                "Feedback.interviewId must not be null");
+        Interview interview = interviewRepository.findById(feedbackInterviewId)
                 .orElseThrow(() -> new RuntimeException("Associated interview not found"));
 
         // Verify the user owns this interview (and therefore this feedback)
@@ -82,10 +90,10 @@ public class FeedbackService {
     /**
      * Get feedback by interview ID with user authorization check
      */
-    @SuppressWarnings("null")
     public Feedback getFeedbackByInterviewId(UUID interviewId, UUID userId) {
+        UUID safeInterviewId = Objects.requireNonNull(interviewId, "interviewId must not be null");
         // First verify the interview exists and belongs to the user
-        Interview interview = interviewRepository.findById(interviewId)
+        Interview interview = interviewRepository.findById(safeInterviewId)
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
 
         if (!interview.getUserId().equals(userId)) {
@@ -93,7 +101,7 @@ public class FeedbackService {
         }
 
         // Get the feedback for this interview
-        return feedbackRepository.findFirstByInterviewId(interviewId)
+        return feedbackRepository.findFirstByInterviewId(safeInterviewId)
                 .orElseThrow(() -> new RuntimeException("No feedback found for interview id: " + interviewId));
     }
 }

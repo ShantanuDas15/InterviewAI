@@ -1,4 +1,4 @@
-package com.InterviewAI.model;
+package com.interviewai.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;

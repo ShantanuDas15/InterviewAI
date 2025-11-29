@@ -1,4 +1,4 @@
-package com.InterviewAI.dto.gemini;
+package com.interviewai.dto.gemini;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,9 +1,5 @@
-package com.InterviewAI.controller;
+package com.interviewai.controller;
 
-import com.InterviewAI.dto.InterviewRequest;
-import com.InterviewAI.model.Interview;
-import com.InterviewAI.service.InterviewService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,14 +7,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.interviewai.dto.InterviewRequest;
+import com.interviewai.model.Interview;
+import com.interviewai.service.InterviewService;
+
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/interviews")
 public class InterviewController {
+    private final InterviewService interviewService;
 
-    @Autowired
-    private InterviewService interviewService;
+    public InterviewController(InterviewService interviewService) {
+        this.interviewService = interviewService;
+    }
 
     @PostMapping("/generate")
     public ResponseEntity<Interview> generateInterview(

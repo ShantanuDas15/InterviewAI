@@ -1,5 +1,5 @@
 // src/main/java/com/InterviewAI/config/SecurityConfig.java
-package com.InterviewAI.config;
+package com.interviewai.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -23,8 +23,11 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     // Injects the 'supabase.jwt.secret' from application.properties
-    @Value("${supabase.jwt.secret}")
-    private String jwtSecret;
+    private final String jwtSecret;
+
+    public SecurityConfig(@Value("${supabase.jwt.secret}") String jwtSecret) {
+        this.jwtSecret = java.util.Objects.requireNonNull(jwtSecret, "supabase.jwt.secret must not be null");
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

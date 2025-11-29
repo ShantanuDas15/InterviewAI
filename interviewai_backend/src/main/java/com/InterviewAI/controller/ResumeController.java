@@ -1,12 +1,16 @@
-package com.InterviewAI.controller;
+package com.interviewai.controller;
 
-import com.InterviewAI.dto.ResumeAnalysisRequest;
-import com.InterviewAI.model.ResumeAnalysis;
-import com.InterviewAI.service.ResumeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import com.interviewai.dto.ResumeAnalysisRequest;
+import com.interviewai.model.ResumeAnalysis;
+import com.interviewai.service.ResumeService;
+
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -19,8 +23,13 @@ import java.util.UUID;
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ResumeController {
 
-    @Autowired
-    private ResumeService resumeService;
+    private static final Logger logger = LoggerFactory.getLogger(ResumeController.class);
+
+    private final ResumeService resumeService;
+
+    public ResumeController(@NonNull ResumeService resumeService) {
+        this.resumeService = java.util.Objects.requireNonNull(resumeService, "resumeService must not be null");
+    }
 
     /**
      * POST /api/resume/analyze
@@ -35,13 +44,13 @@ public class ResumeController {
             @RequestBody ResumeAnalysisRequest request,
             Authentication authentication) {
 
-        System.out.println("=== Resume Analysis Request ===");
-        System.out.println("Authentication: " + (authentication != null ? authentication.getName() : "NULL"));
-        System.out.println("Resume ID: " + request.getResumeId());
-        System.out.println("Job Description: " + request.getJobDescription());
+        logger.info("=== Resume Analysis Request ===");
+        logger.debug("Authentication: {}", (authentication != null ? authentication.getName() : "NULL"));
+        logger.debug("Resume ID: {}", request.getResumeId());
+        logger.debug("Job Description: {}", request.getJobDescription());
 
         if (authentication == null || authentication.getName() == null) {
-            System.err.println("ERROR: No authentication or user ID found!");
+            logger.warn("ERROR: No authentication or user ID found!");
             return Mono.just(ResponseEntity.status(401).build());
         }
 
@@ -49,7 +58,7 @@ public class ResumeController {
         try {
             userId = UUID.fromString(authentication.getName());
         } catch (IllegalArgumentException e) {
-            System.err.println("ERROR: Invalid UUID format for user ID: " + authentication.getName());
+            logger.warn("ERROR: Invalid UUID format for user ID: {}", authentication.getName());
             return Mono.just(ResponseEntity.status(400).build());
         }
 
@@ -59,8 +68,7 @@ public class ResumeController {
                 request.getJobDescription())
                 .map(ResponseEntity::ok)
                 .onErrorResume(e -> {
-                    System.err.println("Error in analyzeResume endpoint: " + e.getMessage());
-                    e.printStackTrace();
+                    logger.error("Error in analyzeResume endpoint: {}", e.getMessage(), e);
                     return Mono.just(ResponseEntity.internalServerError().build());
                 });
     }

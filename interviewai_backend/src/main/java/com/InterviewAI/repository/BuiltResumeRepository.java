@@ -1,8 +1,9 @@
-package com.InterviewAI.repository;
+package com.interviewai.repository;
 
-import com.InterviewAI.model.BuiltResume;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.interviewai.model.BuiltResume;
 
 import java.util.List;
 import java.util.UUID;

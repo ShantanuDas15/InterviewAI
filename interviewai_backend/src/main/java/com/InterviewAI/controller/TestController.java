@@ -1,5 +1,5 @@
 // src/main/java/com/InterviewAI/controller/TestController.java
-package com.InterviewAI.controller;
+package com.interviewai.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

@@ -1,13 +1,15 @@
-package com.InterviewAI.service;
+package com.interviewai.service;
 
-import com.InterviewAI.dto.ResumeBuildRequest;
-import com.InterviewAI.dto.gemini.GeminiRequest;
-import com.InterviewAI.dto.gemini.GeminiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.interviewai.dto.ResumeBuildRequest;
+import com.interviewai.dto.gemini.GeminiRequest;
+import com.interviewai.dto.gemini.GeminiResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.lang.NonNull;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -16,17 +18,27 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    @Autowired
-    private WebClient webClient;
+    private static final String MARKDOWN_JSON = "```json";
+    private static final String MARKDOWN_BACKTICKS = "```";
+    private static final Logger logger = LoggerFactory.getLogger(GeminiService.class);
+    private static final String KEY_VALUE_FORMAT = "  %s: %s%n";
+    private static final String PROMPT_NOT_NULL_MSG = "prompt must not be null";
+    private static final String GEMINI_REQUEST_NOT_NULL_MSG = "GeminiRequest must not be null";
 
-    @Value("${gemini.api.key}")
-    private String geminiApiKey;
+    private final WebClient webClient;
+    private final String geminiApiKey;
+    private final String geminiApiUrl;
+    private final ObjectMapper objectMapper; // For parsing JSON
 
-    @Value("${gemini.api.url}")
-    private String geminiApiUrl;
-
-    @Autowired
-    private ObjectMapper objectMapper; // For parsing JSON
+    public GeminiService(WebClient webClient,
+            @org.springframework.beans.factory.annotation.Value("${gemini.api.key}") String geminiApiKey,
+            @org.springframework.beans.factory.annotation.Value("${gemini.api.url}") String geminiApiUrl,
+            ObjectMapper objectMapper) {
+        this.webClient = java.util.Objects.requireNonNull(webClient, "webClient must not be null");
+        this.geminiApiKey = java.util.Objects.requireNonNull(geminiApiKey, "gemini.api.key must not be null");
+        this.geminiApiUrl = java.util.Objects.requireNonNull(geminiApiUrl, "gemini.api.url must not be null");
+        this.objectMapper = java.util.Objects.requireNonNull(objectMapper, "objectMapper must not be null");
+    }
 
     /**
      * Calls Gemini to generate a complete conversational interview script.
@@ -43,7 +55,7 @@ public class GeminiService {
                         "- DO NOT ask for personal information (name, company, etc.) - you already know it\\n" +
                         "- Keep the opening brief (1 sentence max)\\n" +
                         "- Focus questions on skills, experience, and problem-solving\\n" +
-                        "- Be warm but concise\\n\\n" +
+                        "- Be warm but concise%n%n" +
 
                         "INTERVIEW STRUCTURE:\\n" +
                         "1. Brief welcome (just say hello and let's begin)\\n" +
@@ -56,7 +68,7 @@ public class GeminiService {
                         "- Challenges they've overcome\\n" +
                         "- Teamwork and collaboration\\n" +
                         "- Learning and growth mindset\\n" +
-                        "- Future goals and motivations\\n\\n" +
+                        "- Future goals and motivations%n%n" +
 
                         "CONVERSATIONAL STYLE:\\n" +
                         "- Keep acknowledgments short: 'Great', 'I see', 'Interesting', 'Thanks'\\n" +
@@ -64,40 +76,45 @@ public class GeminiService {
                         "- Natural and friendly tone\\n\\n" +
 
                         "Return ONLY a JSON object with this structure:\\n" +
-                        "{\\n" +
+                        "{%n" +
                         "  \\\"opening\\\": \\\"Brief welcome (1 sentence)\\\",\\n" +
                         "  \\\"questions\\\": [\\n" +
                         "    {\\n" +
                         "      \\\"transition\\\": \\\"Short intro phrase\\\",\\n" +
                         "      \\\"question\\\": \\\"Direct question about skills/experience\\\",\\n" +
                         "      \\\"acknowledgment\\\": \\\"Brief response\\\"\\n" +
-                        "    }\\n" +
+                        "    }%n" +
                         "  ],\\n" +
                         "  \\\"closing\\\": \\\"Brief thank you (1 sentence)\\\"\\n" +
-                        "}\\n\\n" +
+                        "}%n%n" +
 
                         "IMPORTANT: Use ONLY the actual role (%s) in questions. No placeholders. No asking for names or companies. Return raw JSON only.",
                 experience, role, role, role);
 
-        GeminiRequest request = buildGeminiRequest(prompt);
+        java.util.Objects.requireNonNull(prompt, PROMPT_NOT_NULL_MSG);
+        GeminiRequest request = java.util.Objects.requireNonNull(buildGeminiRequest(prompt),
+                GEMINI_REQUEST_NOT_NULL_MSG);
 
         return callGeminiApi(request)
                 .map(GeminiResponse::getFirstText)
-                .map(responseText -> {
-                    // Remove markdown backticks if present
-                    return responseText.replace("```json", "").replace("```", "").trim();
-                })
+                .map(responseText -> responseText.replace(MARKDOWN_JSON, "").replace(MARKDOWN_BACKTICKS, "").trim())
                 .onErrorResume(e -> {
-                    System.err.println("Error generating interview questions: " + e.getMessage());
+                    logger.error("Error generating interview questions: {}", e.getMessage(), e);
                     // Return a fallback conversational structure
                     return Mono.just(
-                            "{\"opening\": \"Hello! Thanks for joining me today. I'm excited to learn more about your background and experience. Let's have a great conversation!\", " +
+                            "{\"opening\": \"Hello! Thanks for joining me today. I'm excited to learn more about your background and experience. Let's have a great conversation!\", "
+                                    +
                                     "\"questions\": [" +
-                                    "{\"transition\": \"Let's start with something about you.\", \"question\": \"Can you tell me about yourself and your background?\", \"acknowledgment\": \"That's great, thanks for sharing.\"}," +
-                                    "{\"transition\": \"Now, I'd like to hear about your experience.\", \"question\": \"What interests you about this role?\", \"acknowledgment\": \"I appreciate your perspective on that.\"}," +
-                                    "{\"transition\": \"Let me ask you about your skills.\", \"question\": \"What are your key strengths?\", \"acknowledgment\": \"Those sound like valuable skills.\"}," +
-                                    "{\"transition\": \"I'm curious about your approach.\", \"question\": \"How do you handle challenges?\", \"acknowledgment\": \"That's a thoughtful approach.\"}," +
-                                    "{\"transition\": \"One more question for you.\", \"question\": \"Where do you see yourself in the future?\", \"acknowledgment\": \"Thank you for sharing your goals.\"}" +
+                                    "{\"transition\": \"Let's start with something about you.\", \"question\": \"Can you tell me about yourself and your background?\", \"acknowledgment\": \"That's great, thanks for sharing.\"},"
+                                    +
+                                    "{\"transition\": \"Now, I'd like to hear about your experience.\", \"question\": \"What interests you about this role?\", \"acknowledgment\": \"I appreciate your perspective on that.\"},"
+                                    +
+                                    "{\"transition\": \"Let me ask you about your skills.\", \"question\": \"What are your key strengths?\", \"acknowledgment\": \"Those sound like valuable skills.\"},"
+                                    +
+                                    "{\"transition\": \"I'm curious about your approach.\", \"question\": \"How do you handle challenges?\", \"acknowledgment\": \"That's a thoughtful approach.\"},"
+                                    +
+                                    "{\"transition\": \"One more question for you.\", \"question\": \"Where do you see yourself in the future?\", \"acknowledgment\": \"Thank you for sharing your goals.\"}"
+                                    +
                                     "], " +
                                     "\"closing\": \"Thank you so much for your time today. You've shared some really interesting insights. We'll be in touch soon with next steps. Have a great day!\"}");
                 });
@@ -108,21 +125,23 @@ public class GeminiService {
      */
     public Mono<Map<String, Object>> analyzeTranscript(String transcript) {
         String prompt = String.format(
-                "Analyze the following interview transcript: \n\n%s\n\n" +
+                "Analyze the following interview transcript: %n%n%s%n%n" +
                         "Provide feedback as a JSON object with three keys: " +
                         "'strengths' (string), 'areas_for_improvement' (string), " +
                         "and 'overall_score' (integer out of 100). " +
                         "Return ONLY the raw JSON object.",
                 transcript);
 
-        GeminiRequest request = buildGeminiRequest(prompt);
+        java.util.Objects.requireNonNull(prompt, PROMPT_NOT_NULL_MSG);
+        GeminiRequest request = java.util.Objects.requireNonNull(buildGeminiRequest(prompt),
+                GEMINI_REQUEST_NOT_NULL_MSG);
 
         return callGeminiApi(request)
                 .map(GeminiResponse::getFirstText)
                 .flatMap(this::parseFeedbackJson) // Use flatMap to handle the Mono
                 .onErrorResume(e -> {
                     // If the API call or parsing fails, return a map with an error
-                    System.err.println("Error analyzing transcript: " + e.getMessage());
+                    logger.error("Error analyzing transcript: {}", e.getMessage(), e);
                     return Mono.just(Map.of(
                             "strengths", "Analysis failed.",
                             "areas_for_improvement", "Could not generate feedback. Please try again.",
@@ -252,20 +271,19 @@ public class GeminiService {
                 inferredRole,
                 jobDescription != null && !jobDescription.isEmpty()
                         ? String.format(
-                                "JOB DESCRIPTION PROVIDED:\n%s\n\nPlease tailor the analysis to this specific job opportunity, highlighting alignment and gaps.",
+                                "JOB DESCRIPTION PROVIDED:%n%s%n%nPlease tailor the analysis to this specific job opportunity, highlighting alignment and gaps.",
                                 jobDescription)
                         : "");
 
-        GeminiRequest request = buildGeminiRequest(prompt);
+        java.util.Objects.requireNonNull(prompt, PROMPT_NOT_NULL_MSG);
+        GeminiRequest request = java.util.Objects.requireNonNull(buildGeminiRequest(prompt),
+                GEMINI_REQUEST_NOT_NULL_MSG);
 
         return callGeminiApi(request)
                 .map(GeminiResponse::getFirstText)
-                .map(responseText -> {
-                    // Remove markdown backticks if present
-                    return responseText.replace("```json", "").replace("```", "").trim();
-                })
+                .map(responseText -> responseText.replace(MARKDOWN_JSON, "").replace(MARKDOWN_BACKTICKS, "").trim())
                 .onErrorResume(e -> {
-                    System.err.println("Error analyzing resume: " + e.getMessage());
+                    logger.error("Error analyzing resume: {}", e.getMessage(), e);
                     return Mono.just("{\"error\": \"Failed to analyze resume.\"}");
                 });
     }
@@ -278,150 +296,24 @@ public class GeminiService {
      */
     public Mono<String> buildResume(ResumeBuildRequest request) {
         try {
-            // Format the user's input data into a readable string for the prompt
             StringBuilder promptData = new StringBuilder();
 
-            promptData.append("=== PERSONAL INFORMATION ===\n");
-            if (request.getPersonalInfo() != null) {
-                request.getPersonalInfo()
-                        .forEach((key, value) -> promptData.append(String.format("%s: %s\n", key, value)));
-            }
+            appendPersonalInfo(promptData, request);
+            appendWorkExperience(promptData, request);
+            appendEducation(promptData, request);
+            appendSkills(promptData, request);
+            appendProjects(promptData, request);
+            appendCertifications(promptData, request);
 
-            promptData.append("\n=== WORK EXPERIENCE ===\n");
-            if (request.getExperience() != null && !request.getExperience().isEmpty()) {
-                for (int i = 0; i < request.getExperience().size(); i++) {
-                    Map<String, String> exp = request.getExperience().get(i);
-                    promptData.append(String.format("Position %d:\n", i + 1));
-                    exp.forEach((key, value) -> promptData.append(String.format("  %s: %s\n", key, value)));
-                }
-            } else {
-                promptData.append("No experience provided.\n");
-            }
-
-            promptData.append("\n=== EDUCATION ===\n");
-            if (request.getEducation() != null && !request.getEducation().isEmpty()) {
-                for (int i = 0; i < request.getEducation().size(); i++) {
-                    Map<String, String> edu = request.getEducation().get(i);
-                    promptData.append(String.format("Education %d:\n", i + 1));
-                    edu.forEach((key, value) -> promptData.append(String.format("  %s: %s\n", key, value)));
-                }
-            } else {
-                promptData.append("No education provided.\n");
-            }
-
-            promptData.append("\n=== SKILLS ===\n");
-            if (request.getSkills() != null && !request.getSkills().isEmpty()) {
-                request.getSkills().forEach(skill -> promptData.append(String.format("- %s\n", skill)));
-            } else {
-                promptData.append("No skills provided.\n");
-            }
-
-            promptData.append("\n=== PROJECTS ===\n");
-            if (request.getProjects() != null && !request.getProjects().isEmpty()) {
-                for (int i = 0; i < request.getProjects().size(); i++) {
-                    Map<String, String> project = request.getProjects().get(i);
-                    promptData.append(String.format("Project %d:\n", i + 1));
-                    project.forEach((key, value) -> promptData.append(String.format("  %s: %s\n", key, value)));
-                }
-            } else {
-                promptData.append("No projects provided.\n");
-            }
-
-            if (request.getCertifications() != null && !request.getCertifications().isEmpty()) {
-                promptData.append("\n=== CERTIFICATIONS ===\n");
-                for (int i = 0; i < request.getCertifications().size(); i++) {
-                    Map<String, String> cert = request.getCertifications().get(i);
-                    promptData.append(String.format("Certification %d:\n", i + 1));
-                    cert.forEach((key, value) -> promptData.append(String.format("  %s: %s\n", key, value)));
-                }
-            }
-
-            String prompt = String.format(
-                    """
-                            You are an expert resume writer with years of experience in career counseling and professional document creation.
-
-                            Your task is to transform the following raw resume data into professionally written, compelling content.
-
-                            RAW RESUME DATA:
-                            %s
-
-                            INSTRUCTIONS:
-                            1. Rewrite all experience descriptions using strong action verbs and quantifiable achievements
-                            2. Create a compelling professional summary (2-3 sentences) based on the experience and skills
-                            3. Enhance project descriptions to highlight impact and technical complexity
-                            4. Organize skills into logical categories (e.g., Programming Languages, Frameworks, Tools, Soft Skills)
-                            5. Ensure all dates are properly formatted
-                            6. Use professional, industry-standard terminology
-                            7. Make achievements specific and measurable where possible
-
-                            IMPORTANT RULES:
-                            - Keep all factual information accurate (dates, company names, schools, etc.)
-                            - DO NOT invent or fabricate any experiences, achievements, or qualifications
-                            - DO enhance phrasing and presentation of existing information
-                            - Use active voice and strong action verbs (e.g., "Engineered", "Architected", "Optimized", "Spearheaded")
-
-                            RETURN FORMAT:
-                            Return a JSON object with the following structure:
-                            {
-                              "summary": "<professional summary paragraph>",
-                              "experience": [
-                                {
-                                  "title": "<job title>",
-                                  "company": "<company name>",
-                                  "location": "<location if provided>",
-                                  "startDate": "<formatted start date>",
-                                  "endDate": "<formatted end date or 'Present'>",
-                                  "bullets": ["<enhanced bullet point 1>", "<enhanced bullet point 2>", ...]
-                                }
-                              ],
-                              "education": [
-                                {
-                                  "degree": "<degree name>",
-                                  "school": "<school name>",
-                                  "location": "<location if provided>",
-                                  "startDate": "<formatted start date>",
-                                  "endDate": "<formatted end date>",
-                                  "gpa": "<GPA if provided>",
-                                  "achievements": ["<achievement 1>", "<achievement 2>", ...]
-                                }
-                              ],
-                              "skills": {
-                                "technical": ["<skill 1>", "<skill 2>", ...],
-                                "tools": ["<tool 1>", "<tool 2>", ...],
-                                "soft": ["<soft skill 1>", "<soft skill 2>", ...]
-                              },
-                              "projects": [
-                                {
-                                  "name": "<project name>",
-                                  "description": "<enhanced project description>",
-                                  "technologies": ["<tech 1>", "<tech 2>", ...],
-                                  "link": "<project link if provided>",
-                                  "highlights": ["<highlight 1>", "<highlight 2>", ...]
-                                }
-                              ],
-                              "certifications": [
-                                {
-                                  "name": "<certification name>",
-                                  "issuer": "<issuing organization>",
-                                  "date": "<date obtained>",
-                                  "credentialId": "<credential ID if provided>"
-                                }
-                              ]
-                            }
-
-                            Return ONLY the raw JSON object without any markdown formatting, code blocks, or additional text.
-                            """,
-                    promptData.toString());
-
-            GeminiRequest geminiRequest = buildGeminiRequest(prompt);
+            String prompt = String.format(RESUME_PROMPT_TEMPLATE, promptData.toString());
+            java.util.Objects.requireNonNull(prompt, PROMPT_NOT_NULL_MSG);
+            GeminiRequest geminiRequest = java.util.Objects.requireNonNull(buildGeminiRequest(prompt),
+                    GEMINI_REQUEST_NOT_NULL_MSG);
             return callGeminiApi(geminiRequest)
                     .map(GeminiResponse::getFirstText)
-                    .map(responseText -> {
-                        // Remove markdown backticks if present
-                        return responseText.replace("```json", "").replace("```", "").trim();
-                    })
+                    .map(responseText -> responseText.replace(MARKDOWN_JSON, "").replace(MARKDOWN_BACKTICKS, "").trim())
                     .onErrorResume(e -> {
-                        System.err.println("Error building resume: " + e.getMessage());
+                        logger.error("Error building resume: {}", e.getMessage(), e);
                         return Mono.just("{\"error\": \"Failed to build resume. Please try again.\"}");
                     });
 
@@ -435,21 +327,20 @@ public class GeminiService {
      */
     private String inferRoleFromText(String text) {
         String lowerText = text.toLowerCase();
-        if (lowerText.contains("software") || lowerText.contains("developer") || lowerText.contains("engineer")) {
+        if (lowerText.contains("software") || lowerText.contains("developer") || lowerText.contains("engineer"))
             return "Software Engineer/Developer";
-        } else if (lowerText.contains("data") && (lowerText.contains("scientist") || lowerText.contains("analyst"))) {
+        else if (lowerText.contains("data") && (lowerText.contains("scientist") || lowerText.contains("analyst")))
             return "Data Scientist/Analyst";
-        } else if (lowerText.contains("devops") || lowerText.contains("sre")) {
+        else if (lowerText.contains("devops") || lowerText.contains("sre"))
             return "DevOps/SRE Engineer";
-        } else if (lowerText.contains("product") && lowerText.contains("manager")) {
+        else if (lowerText.contains("product") && lowerText.contains("manager"))
             return "Product Manager";
-        } else if (lowerText.contains("designer") || lowerText.contains("ux") || lowerText.contains("ui")) {
+        else if (lowerText.contains("designer") || lowerText.contains("ux") || lowerText.contains("ui"))
             return "UX/UI Designer";
-        } else if (lowerText.contains("marketing")) {
+        else if (lowerText.contains("marketing"))
             return "Marketing Professional";
-        } else if (lowerText.contains("sales")) {
+        else if (lowerText.contains("sales"))
             return "Sales Professional";
-        }
         return "Professional";
     }
 
@@ -458,24 +349,25 @@ public class GeminiService {
      */
     private String inferExperienceLevelFromText(String text) {
         String lowerText = text.toLowerCase();
-        if (lowerText.contains("senior") || lowerText.contains("lead") || lowerText.contains("principal")) {
+        if (lowerText.contains("senior") || lowerText.contains("lead") || lowerText.contains("principal"))
             return "Senior Level";
-        } else if (lowerText.contains("junior") || lowerText.contains("intern") || lowerText.contains("entry")) {
+        else if (lowerText.contains("junior") || lowerText.contains("intern") || lowerText.contains("entry"))
             return "Entry Level";
-        } else if (text.split("experience").length > 1 || text.split("worked").length > 2) {
+        else if (text.split("experience").length > 1 || text.split("worked").length > 2)
             return "Mid Level";
-        }
         return "Mid Level";
     }
 
-    private GeminiRequest buildGeminiRequest(String prompt) {
-        return new GeminiRequest(
+    private GeminiRequest buildGeminiRequest(@NonNull String prompt) {
+        java.util.Objects.requireNonNull(prompt, PROMPT_NOT_NULL_MSG);
+        GeminiRequest request = new GeminiRequest(
                 List.of(new GeminiRequest.Content(
                         List.of(new GeminiRequest.Part(prompt)))));
+        return java.util.Objects.requireNonNull(request, GEMINI_REQUEST_NOT_NULL_MSG);
     }
 
-    @SuppressWarnings("null")
-    private Mono<GeminiResponse> callGeminiApi(GeminiRequest request) {
+    private Mono<GeminiResponse> callGeminiApi(@NonNull GeminiRequest request) {
+        java.util.Objects.requireNonNull(request, GEMINI_REQUEST_NOT_NULL_MSG);
         // Using gemini-2.0-flash - the latest fast and reliable model
         String fullUrl = geminiApiUrl + "/v1beta/models/gemini-2.5-flash:generateContent?key=" + geminiApiKey;
 
@@ -486,21 +378,164 @@ public class GeminiService {
                 .retrieve()
                 .bodyToMono(GeminiResponse.class)
                 .doOnError(error -> {
-                    System.err.println("Gemini API Error: " + error.getMessage());
-                    System.err.println("URL: " + fullUrl);
+                    logger.error("Gemini API Error: {}", error.getMessage(), error);
+                    logger.error("URL: {}", fullUrl);
                 });
     }
 
     private Mono<Map<String, Object>> parseFeedbackJson(String jsonString) {
         try {
             // Remove markdown backticks if present
-            String cleanedJson = jsonString.replace("```json", "").replace("```", "").trim();
+            String cleanedJson = jsonString.replace(MARKDOWN_JSON, "").replace(MARKDOWN_BACKTICKS, "").trim();
 
             @SuppressWarnings("unchecked")
             Map<String, Object> feedbackMap = objectMapper.readValue(cleanedJson, Map.class);
             return Mono.just(feedbackMap);
         } catch (Exception e) {
             return Mono.error(new RuntimeException("Failed to parse JSON feedback: " + e.getMessage()));
+        }
+    }
+
+    // --- Helpers for buildResume refactor ---
+    private static final String RESUME_PROMPT_TEMPLATE = """
+            You are an expert resume writer with years of experience in career counseling and professional document creation.
+
+            Your task is to transform the following raw resume data into professionally written, compelling content.
+
+            RAW RESUME DATA:
+            %s
+
+            INSTRUCTIONS:
+            1. Rewrite all experience descriptions using strong action verbs and quantifiable achievements
+            2. Create a compelling professional summary (2-3 sentences) based on the experience and skills
+            3. Enhance project descriptions to highlight impact and technical complexity
+            4. Organize skills into logical categories (e.g., Programming Languages, Frameworks, Tools, Soft Skills)
+            5. Ensure all dates are properly formatted
+            6. Use professional, industry-standard terminology
+            7. Make achievements specific and measurable where possible
+
+            IMPORTANT RULES:
+            - Keep all factual information accurate (dates, company names, schools, etc.)
+            - DO NOT invent or fabricate any experiences, achievements, or qualifications
+            - DO enhance phrasing and presentation of existing information
+            - Use active voice and strong action verbs (e.g., "Engineered", "Architected", "Optimized", "Spearheaded")
+
+            RETURN FORMAT:
+            Return a JSON object with the following structure:
+            {
+                "summary": "<professional summary paragraph>",
+                "experience": [
+                    {
+                        "title": "<job title>",
+                        "company": "<company name>",
+                        "location": "<location if provided>",
+                        "startDate": "<formatted start date>",
+                        "endDate": "<formatted end date or 'Present'>",
+                        "bullets": ["<enhanced bullet point 1>", "<enhanced bullet point 2>", ...]
+                    }
+                ],
+                "education": [
+                    {
+                        "degree": "<degree name>",
+                        "school": "<school name>",
+                        "location": "<location if provided>",
+                        "startDate": "<formatted start date>",
+                        "endDate": "<formatted end date>",
+                        "gpa": "<GPA if provided>",
+                        "achievements": ["<achievement 1>", "<achievement 2>", ...]
+                    }
+                ],
+                "skills": {
+                    "technical": ["<skill 1>", "<skill 2>", ...],
+                    "tools": ["<tool 1>", "<tool 2>", ...],
+                    "soft": ["<soft skill 1>", "<soft skill 2>", ...]
+                },
+                "projects": [
+                    {
+                        "name": "<project name>",
+                        "description": "<enhanced project description>",
+                        "technologies": ["<tech 1>", "<tech 2>", ...],
+                        "link": "<project link if provided>",
+                        "highlights": ["<highlight 1>", "<highlight 2>", ...]
+                    }
+                ],
+                "certifications": [
+                    {
+                        "name": "<certification name>",
+                        "issuer": "<issuing organization>",
+                        "date": "<date obtained>",
+                        "credentialId": "<credential ID if provided>"
+                    }
+                ]
+            }
+
+            Return ONLY the raw JSON object without any markdown formatting, code blocks, or additional text.
+            """;
+
+    private void appendPersonalInfo(StringBuilder sb, ResumeBuildRequest request) {
+        sb.append(String.format("=== PERSONAL INFORMATION ===%n"));
+        if (request.getPersonalInfo() != null) {
+            request.getPersonalInfo().forEach((k, v) -> sb.append(String.format("%s: %s%n", k, v)));
+        }
+    }
+
+    private void appendWorkExperience(StringBuilder sb, ResumeBuildRequest request) {
+        sb.append(String.format("%n=== WORK EXPERIENCE ===%n"));
+        if (request.getExperience() == null || request.getExperience().isEmpty()) {
+            sb.append(String.format("No experience provided.%n"));
+            return;
+        }
+        for (int i = 0; i < request.getExperience().size(); i++) {
+            Map<String, String> exp = request.getExperience().get(i);
+            sb.append(String.format("Position %d:%n", i + 1));
+            exp.forEach((k, v) -> sb.append(String.format(KEY_VALUE_FORMAT, k, v)));
+        }
+    }
+
+    private void appendEducation(StringBuilder sb, ResumeBuildRequest request) {
+        sb.append(String.format("%n=== EDUCATION ===%n"));
+        if (request.getEducation() == null || request.getEducation().isEmpty()) {
+            sb.append(String.format("No education provided.%n"));
+            return;
+        }
+        for (int i = 0; i < request.getEducation().size(); i++) {
+            Map<String, String> edu = request.getEducation().get(i);
+            sb.append(String.format("Education %d:%n", i + 1));
+            edu.forEach((k, v) -> sb.append(String.format(KEY_VALUE_FORMAT, k, v)));
+        }
+    }
+
+    private void appendSkills(StringBuilder sb, ResumeBuildRequest request) {
+        sb.append(String.format("%n=== SKILLS ===%n"));
+        if (request.getSkills() == null || request.getSkills().isEmpty()) {
+            sb.append(String.format("No skills provided.%n"));
+            return;
+        }
+        request.getSkills().forEach(skill -> sb.append(String.format("- %s%n", skill)));
+    }
+
+    private void appendProjects(StringBuilder sb, ResumeBuildRequest request) {
+        sb.append(String.format("%n=== PROJECTS ===%n"));
+        if (request.getProjects() == null || request.getProjects().isEmpty()) {
+            sb.append(String.format("No projects provided.%n"));
+            return;
+        }
+        for (int i = 0; i < request.getProjects().size(); i++) {
+            Map<String, String> project = request.getProjects().get(i);
+            sb.append(String.format("Project %d:%n", i + 1));
+            project.forEach((k, v) -> sb.append(String.format(KEY_VALUE_FORMAT, k, v)));
+        }
+    }
+
+    private void appendCertifications(StringBuilder sb, ResumeBuildRequest request) {
+        if (request.getCertifications() == null || request.getCertifications().isEmpty()) {
+            return;
+        }
+        sb.append(String.format("%n=== CERTIFICATIONS ===%n"));
+        for (int i = 0; i < request.getCertifications().size(); i++) {
+            Map<String, String> cert = request.getCertifications().get(i);
+            sb.append(String.format("Certification %d:%n", i + 1));
+            cert.forEach((k, v) -> sb.append(String.format(KEY_VALUE_FORMAT, k, v)));
         }
     }
 }

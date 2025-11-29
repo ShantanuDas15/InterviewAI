@@ -1,8 +1,10 @@
-package com.InterviewAI.repository;
+package com.interviewai.repository;
 
-import com.InterviewAI.model.Feedback;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.interviewai.model.Feedback;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

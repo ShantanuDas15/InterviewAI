@@ -1,17 +1,25 @@
-package com.InterviewAI.service;
+package com.interviewai.service;
 
-import com.InterviewAI.model.ResumeAnalysis;
-import com.InterviewAI.repository.ResumeAnalysisRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interviewai.model.ResumeAnalysis;
+import com.interviewai.repository.ResumeAnalysisRepository;
+
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
+import com.interviewai.exception.AiAnalysisParseException;
+import com.interviewai.exception.AnalysisNotFoundException;
+import com.interviewai.exception.DownloadFailedException;
+import com.interviewai.exception.MetadataParseException;
+import com.interviewai.exception.PdfExtractionException;
+import com.interviewai.exception.ResumeNotFoundException;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,18 +33,24 @@ import java.util.UUID;
 @Service
 public class ResumeService {
 
-    @Autowired
-    private GeminiService geminiService;
+    private static final Logger logger = LoggerFactory.getLogger(ResumeService.class);
 
-    @Autowired
-    private ResumeAnalysisRepository resumeAnalysisRepository;
+    private final GeminiService geminiService;
+    private final ResumeAnalysisRepository resumeAnalysisRepository;
+    private final WebClient supabaseWebClient;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    @Qualifier("supabaseWebClient")
-    private WebClient supabaseWebClient;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+    public ResumeService(GeminiService geminiService,
+            ResumeAnalysisRepository resumeAnalysisRepository,
+            @Qualifier("supabaseWebClient") WebClient supabaseWebClient,
+            ObjectMapper objectMapper) {
+        this.geminiService = java.util.Objects.requireNonNull(geminiService, "geminiService must not be null");
+        this.resumeAnalysisRepository = java.util.Objects.requireNonNull(resumeAnalysisRepository,
+                "resumeAnalysisRepository must not be null");
+        this.supabaseWebClient = java.util.Objects.requireNonNull(supabaseWebClient,
+                "supabaseWebClient must not be null");
+        this.objectMapper = java.util.Objects.requireNonNull(objectMapper, "objectMapper must not be null");
+    }
 
     /**
      * Analyzes a resume by downloading it from Supabase Storage,
@@ -63,7 +77,7 @@ public class ResumeService {
                         JsonNode data = objectMapper.readTree(responseBody);
                         if (!data.isArray() || data.isEmpty()) {
                             return Mono.<Map<String, Object>>error(
-                                    new RuntimeException("Resume not found or access denied"));
+                                    new ResumeNotFoundException("Resume not found or access denied"));
                         }
 
                         JsonNode resumeData = data.get(0);
@@ -73,8 +87,7 @@ public class ResumeService {
                         String uploadDate = resumeData.get("upload_date").asText();
 
                         // 2. Download the file from storage (using authenticated endpoint)
-                        System.out
-                                .println("Downloading file from: /storage/v1/object/authenticated/resumes/" + filePath);
+                        logger.info("Downloading file from: /storage/v1/object/authenticated/resumes/{}", filePath);
                         return supabaseWebClient.get()
                                 .uri("/storage/v1/object/authenticated/resumes/" + filePath)
                                 .retrieve()
@@ -82,8 +95,8 @@ public class ResumeService {
                                         status -> status.is4xxClientError() || status.is5xxServerError(),
                                         response -> response.bodyToMono(String.class)
                                                 .flatMap(errorBody -> {
-                                                    System.err.println("Supabase Storage error: " + errorBody);
-                                                    return Mono.error(new RuntimeException(
+                                                    logger.error("Supabase Storage error: {}", errorBody);
+                                                    return Mono.error(new DownloadFailedException(
                                                             "Failed to download file: " + errorBody));
                                                 }))
                                 .bodyToMono(byte[].class)
@@ -99,12 +112,13 @@ public class ResumeService {
                                                 "fileSize", String.format("%.2f KB", fileSize / 1024.0),
                                                 "uploadDate", uploadDate);
                                     } catch (IOException e) {
-                                        throw new RuntimeException("Failed to extract PDF text: " + e.getMessage());
+                                        throw new PdfExtractionException(
+                                                "Failed to extract PDF text: " + e.getMessage(), e);
                                     }
                                 });
                     } catch (Exception e) {
                         return Mono.<Map<String, Object>>error(
-                                new RuntimeException("Failed to parse resume metadata: " + e.getMessage()));
+                                new MetadataParseException("Failed to parse resume metadata: " + e.getMessage(), e));
                     }
                 })
                 // 4. Send text to Gemini for analysis with metadata
@@ -126,8 +140,8 @@ public class ResumeService {
 
                         // Handle overallScore - could be Integer or Double from JSON
                         Object scoreObj = analysisMap.get("overallScore");
-                        if (scoreObj instanceof Number) {
-                            analysis.setOverallScore(((Number) scoreObj).intValue());
+                        if (scoreObj instanceof Number number) {
+                            analysis.setOverallScore(number.intValue());
                         }
 
                         // Store the entire structured analysis in the strengths field
@@ -155,9 +169,9 @@ public class ResumeService {
                         return Mono.fromCallable(() -> resumeAnalysisRepository.save(analysis));
 
                     } catch (Exception e) {
-                        System.err.println("Error parsing Gemini response: " + e.getMessage());
+                        logger.error("Error parsing Gemini response: {}", e.getMessage(), e);
                         return Mono.<ResumeAnalysis>error(
-                                new RuntimeException("Failed to parse AI analysis: " + e.getMessage()));
+                                new AiAnalysisParseException("Failed to parse AI analysis: " + e.getMessage(), e));
                     }
                 })
                 // 7. Update the is_analyzed flag in the resumes table
@@ -174,9 +188,9 @@ public class ResumeService {
                             .retrieve()
                             .bodyToMono(Void.class)
                             .subscribe(
-                                    result -> System.out.println("Successfully updated is_analyzed flag"),
-                                    error -> System.err
-                                            .println("Failed to update is_analyzed flag: " + error.getMessage()));
+                                    result -> logger.info("Successfully updated is_analyzed flag"),
+                                    error -> logger.error("Failed to update is_analyzed flag: {}", error.getMessage(),
+                                            error));
                 });
     }
 
@@ -202,6 +216,6 @@ public class ResumeService {
      */
     public Mono<ResumeAnalysis> getAnalysis(UUID resumeId) {
         return Mono.fromCallable(() -> resumeAnalysisRepository.findByResumeId(resumeId)
-                .orElseThrow(() -> new RuntimeException("Analysis not found")));
+                .orElseThrow(() -> new AnalysisNotFoundException("Analysis not found")));
     }
 }

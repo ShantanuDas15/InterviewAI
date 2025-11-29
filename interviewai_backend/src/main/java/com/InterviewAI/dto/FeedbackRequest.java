@@ -1,4 +1,4 @@
-package com.InterviewAI.dto;
+package com.interviewai.dto;
 
 import lombok.Data;
 import java.util.UUID;
